@@ -301,6 +301,33 @@ public class KafkaConnectSourceTest extends ProducerConsumerBase {
     }
 
     @Test
+    void testHeadersPropagatedAsProperties() throws Exception {
+        Map<String, Object> config = getConfig();
+        config.put(TaskConfig.TASK_CLASS_CONFIG, "org.apache.kafka.connect.file.FileStreamSourceTask");
+        config.put(PulsarKafkaWorkerConfig.TOPIC_NAMESPACE_CONFIG, "default-tenant/default-ns");
+
+        kafkaConnectSource = new KafkaConnectSource();
+        kafkaConnectSource.open(config, context);
+
+        Map<String, Object> sourcePartition = new HashMap<>();
+        Map<String, Object> sourceOffset = new HashMap<>();
+        sourcePartition.put("test", "test");
+        sourceOffset.put("test", 0);
+        SourceRecord srcRecord = new SourceRecord(
+                sourcePartition, sourceOffset, topicName, null,
+                null, null, null, "value"
+        );
+        srcRecord.headers().addString("event-type", "order.created");
+        srcRecord.headers().addString("event-id", "abc-123");
+
+        KafkaSourceRecord record = kafkaConnectSource.processSourceRecord(srcRecord);
+
+        assertEquals("order.created", record.getProperties().get("event-type"));
+        assertEquals("abc-123", record.getProperties().get("event-id"));
+        assertEquals(2, record.getProperties().size());
+    }
+
+    @Test
     void testShortTopicNames() throws Exception {
         Map<String, Object> config = getConfig();
         config.put(TaskConfig.TASK_CLASS_CONFIG, "org.apache.kafka.connect.file.FileStreamSourceTask");

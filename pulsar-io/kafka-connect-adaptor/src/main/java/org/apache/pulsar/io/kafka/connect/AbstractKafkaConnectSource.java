@@ -331,9 +331,11 @@ public abstract class AbstractKafkaConnectSource<T> implements Source<T> {
             return RECORD_SEQUENCE;
         }
 
+        Map<String, String> properties = PROPERTIES;
+
         @Override
         public Map<String, String> getProperties() {
-            return PROPERTIES;
+            return properties;
         }
 
         public boolean isEmpty() {
